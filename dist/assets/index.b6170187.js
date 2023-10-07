@@ -1,0 +1,1 @@
+import{U as r}from"./InConstruction.c0b15ec2.js";import{a as o,N as e}from"./vendor.2bbcded4.js";import{p as a}from"./index.8aff0b31.js";const c=()=>o("div",{className:"flex flex-col gap-4",children:o(r,{})}),i=()=>o(e,{to:a.login,replace:!0});export{c as Dashboard,i as Home};

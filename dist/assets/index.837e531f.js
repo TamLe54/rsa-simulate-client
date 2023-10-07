@@ -1,0 +1,1 @@
+import{U as o}from"./InConstruction.c0b15ec2.js";import{a as e}from"./vendor.2bbcded4.js";import"./index.8aff0b31.js";const t=()=>e("div",{className:"flex flex-col gap-4",children:e(o,{})});export{t as CustomerManagement};
