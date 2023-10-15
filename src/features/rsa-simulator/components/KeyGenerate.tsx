@@ -1,6 +1,6 @@
 import type { AccountToGenerateKey } from '../api';
 
-import { Button, Form, Input, Spin } from 'antd';
+import { Button, Form, Input, Spin, message } from 'antd';
 import { useForm } from 'antd/es/form/Form';
 import clsx from 'clsx';
 import { useState } from 'react';
@@ -13,24 +13,33 @@ export const KeyGenerate = () => {
   const [form] = useForm();
   const [publicKey, setPublicKey] = useState('');
   const [privateKey, setPrivateKey] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
 
   const mutateGenerateKey = useKeyGenerate();
 
   const onFinish = async (values: any) => {
-    setIsGenerating(true);
     const account: AccountToGenerateKey = {
       email: values.email,
       password: values.password,
     };
-    const result = await mutateGenerateKey.mutateAsync(account);
 
-    if (result) {
-      setPublicKey(result.publicKey);
-      setPrivateKey(result.privateKey);
-    }
+    await mutateGenerateKey
+      .mutateAsync(account)
+      .then(result => {
+        message.success('Completed key generating');
+        setPublicKey(result.publicKey);
+        setPrivateKey(result.privateKey);
+      })
+      .catch(() => {
+        if (mutateGenerateKey.isError) {
+          message.error(mutateGenerateKey.error.response?.data.message);
+        }
+      });
+  };
 
-    setIsGenerating(false);
+  const clearValue = async () => {
+    form.resetFields();
+    setPublicKey('');
+    setPrivateKey('');
   };
 
   return (
@@ -38,15 +47,35 @@ export const KeyGenerate = () => {
       <div className={clsx('accout-info', 'w-[30%]', 'flex flex-col flex-end')}>
         <Form form={form} layout="vertical" onFinish={onFinish}>
           <Form.Item name={'email'} label="Email" required>
-            <Input type="email" size="large" disabled={isGenerating} />
+            <Input type="email" size="large" disabled={mutateGenerateKey.isLoading} />
           </Form.Item>
 
           <Form.Item name={'password'} label="Password" required>
-            <Input type="password" size="large" disabled={isGenerating} />
+            <Input type="password" size="large" disabled={mutateGenerateKey.isLoading} />
           </Form.Item>
           <Form.Item>
-            <Button htmlType="submit" type="primary" className="w-full" size="large" disabled={isGenerating}>
-              {isGenerating ? <Spin /> : <>Send</>}
+            <Button
+              htmlType="submit"
+              type="primary"
+              className="w-full"
+              size="large"
+              disabled={mutateGenerateKey.isLoading}
+            >
+              {mutateGenerateKey.isLoading ? <Spin /> : <>Send</>}
+            </Button>
+          </Form.Item>
+          <Form.Item>
+            <Button
+              htmlType="button"
+              type="default"
+              disabled={mutateGenerateKey.isLoading}
+              size="large"
+              className="w-full"
+              onClick={() => {
+                clearValue();
+              }}
+            >
+              Clear
             </Button>
           </Form.Item>
         </Form>

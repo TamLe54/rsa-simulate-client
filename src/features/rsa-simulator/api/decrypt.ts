@@ -1,3 +1,5 @@
+import type { AxiosError } from 'axios';
+
 import { useMutation } from '@tanstack/react-query';
 
 import { apiUrls } from '@/constants';
@@ -10,6 +12,13 @@ export type RequestToDecrypt = {
   privateKey: string;
 };
 
+export type GeneralError = {
+  message: string;
+  success: boolean;
+  errorId: string;
+  errors: string[];
+};
+
 export const dataToDecrypt = async (data: RequestToDecrypt) => {
   const result = await axios.post(apiUrls.rsa.decrypt, data);
 
@@ -19,5 +28,8 @@ export const dataToDecrypt = async (data: RequestToDecrypt) => {
 export const useDataDecryption = () => {
   return useMutation({
     mutationFn: dataToDecrypt,
+    onError: (error: AxiosError<GeneralError>) => {
+      return error;
+    },
   });
 };

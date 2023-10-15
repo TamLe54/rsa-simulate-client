@@ -1,6 +1,6 @@
 import type { RequestToEncrypt } from '../api';
 
-import { Button, Form, Input, Spin } from 'antd';
+import { Button, Form, Input, message, Spin } from 'antd';
 import { useForm } from 'antd/es/form/Form';
 import TextArea from 'antd/es/input/TextArea';
 import clsx from 'clsx';
@@ -10,26 +10,32 @@ import { useDataEncryption } from '../api';
 
 export const Encrypt = () => {
   const [form] = useForm();
-  const [encryptedData, setEncryptedData] = useState();
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [encryptedData, setEncryptedData] = useState('');
 
   const mutateEncrypt = useDataEncryption();
 
   const onFinish = async (values: any) => {
-    setIsGenerating(true);
-
     const requestToEncrypt: RequestToEncrypt = {
       dataToEncrypt: values.dataToEncrypt,
       publicKey: values.publicKey,
     };
 
-    const result = await mutateEncrypt.mutateAsync(requestToEncrypt);
+    await mutateEncrypt
+      .mutateAsync(requestToEncrypt)
+      .then(data => {
+        message.success('Encrypted successfully');
+        setEncryptedData(data.encryptedData);
+      })
+      .catch(() => {
+        if (mutateEncrypt.isError) {
+          message.error(mutateEncrypt.error.response?.data.message);
+        }
+      });
+  };
 
-    if (result) {
-      setEncryptedData(result.encryptedData);
-    }
-
-    setIsGenerating(false);
+  const clearValue = async () => {
+    form.resetFields();
+    setEncryptedData('');
   };
 
   return (
@@ -38,7 +44,7 @@ export const Encrypt = () => {
         <Form form={form} layout="vertical" onFinish={onFinish}>
           <Form.Item name={'dataToEncrypt'} label="Data you want to encrypt" required>
             <TextArea
-              disabled={isGenerating}
+              disabled={mutateEncrypt.isLoading}
               autoSize={{
                 minRows: 5,
                 maxRows: 7,
@@ -49,7 +55,7 @@ export const Encrypt = () => {
 
           <Form.Item name={'publicKey'} label="The public key" required>
             <TextArea
-              disabled={isGenerating}
+              disabled={mutateEncrypt.isLoading}
               autoSize={{
                 minRows: 5,
                 maxRows: 7,
@@ -58,8 +64,8 @@ export const Encrypt = () => {
             />
           </Form.Item>
           <Form.Item>
-            <Button htmlType="submit" type="primary" className="w-full" size="large" disabled={isGenerating}>
-              {isGenerating ? <Spin /> : <>Send</>}
+            <Button htmlType="submit" type="primary" className="w-full" size="large" disabled={mutateEncrypt.isLoading}>
+              {mutateEncrypt.isLoading ? <Spin /> : <>Send</>}
             </Button>
           </Form.Item>
         </Form>
@@ -70,11 +76,24 @@ export const Encrypt = () => {
           value={encryptedData}
           autoSize={{
             minRows: 15,
+            maxRows: 20,
           }}
           className="h-full overflow-auto"
           placeholder="Send your data and public key to get the encrypt data"
           readOnly
         />
+        <Button
+          htmlType="button"
+          type="default"
+          className="w-full"
+          size="large"
+          disabled={mutateEncrypt.isLoading}
+          onClick={() => {
+            clearValue();
+          }}
+        >
+          Clear
+        </Button>
       </div>
     </div>
   );
